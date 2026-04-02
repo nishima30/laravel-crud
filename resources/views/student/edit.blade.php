@@ -63,14 +63,12 @@
                 @error('image')
                   <p class="invalid-feedback">{{ $message }}</p>
                   @enderror
-                   <div class="pt-3">
-                  @if($student->image != '' && file_exists(public_path().'/uploads/students/'.
-                        $student->image))
-                        <img src="{{ url('uploads/students/'.$student->image)  }}" alt=""
-                        width="100" height="100" >
-                       @endif
-
-                   </div>
+                  <div class="pt-3">
+                    @if($student->image != '')
+                        <img src="{{ route('students.image', $student->image) }}" alt=""
+                        width="100" height="100">
+                    @endif
+                </div>
 
 
                 </div>
