@@ -52,15 +52,13 @@
                 <tr>
                     <td>{{ $student->id }}</td>
                     <td>
-                        @if($student->image != '' && file_exists(public_path().'/uploads/students/'.
-                        $student->image))
-                        <img src="{{ url('uploads/students/'.$student->image)  }}" alt=""
+                       @if($student->image != '')
+                        <img src="{{ route('students.image', $student->image) }}" alt=""
                         width="50" height="50" class="rounded-circle">
-                        @else
-
-                        <img src="{{ url('uploads/students/no-image.png')  }}" alt=""
+                    @else
+                        <img src="{{ url('uploads/students/no-image.png') }}" alt=""
                         width="50" height="50" class="rounded-circle">
-                        @endif
+                    @endif
                     </td>
                     <td>{{ $student->name }}</td>
                     <td>{{ $student->email }}</td>

@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Student;
-use Illuminate\Support\Facades\File;
+ 
+use Illuminate\Support\Facades\Storage;
 
 class StudentController extends Controller
 {
@@ -50,14 +51,19 @@ return view('student.list' , ['students'=>$students]);
         $student -> save();
 
         //upload image
-        if($request->image){
+       if($request->image){
             $ext = $request->image->getClientOriginalExtension();
             $newFileName = time().'.'.$ext;
-            $request->image->move(public_path().'/uploads/students/',$newFileName);
-            $student->image = $newFileName;
-            $student -> save();
 
-        }
+            Storage::disk('s3')->putFileAs(
+               'uploads/students',
+               $request->image,
+               $newFileName
+            );
+
+            $student->image = $newFileName;
+            $student->save();
+         }
 
         $request->session()->flash('success' , 'student added successfully');
 
@@ -98,19 +104,27 @@ $student = Student::findOrFail($id);
            $student -> save();
    
            //upload image
-           if($request->image){
+         if($request->image){
 
             $oldImage = $student->image;
 
-               $ext = $request->image->getClientOriginalExtension();
-               $newFileName = time().'.'.$ext;
-               $request->image->move(public_path().'/uploads/students/',$newFileName);
-               $student->image = $newFileName;
-               $student -> save();
+            $ext = $request->image->getClientOriginalExtension();
+            $newFileName = time().'.'.$ext;
 
-               File::delete(public_path().'/uploads/students/'.$oldImage);
-   
-           }
+            Storage::disk('s3')->putFileAs(
+               'uploads/students',
+               $request->image,
+               $newFileName
+            );
+
+            $student->image = $newFileName;
+            $student->save();
+
+            if($oldImage){
+               Storage::disk('s3')->delete('uploads/students/'.$oldImage);
+            }
+
+         }
    
          //  $request->session()->flash('success' , 'student added successfully');
    
@@ -132,7 +146,9 @@ public function destroy($id , Request $request){
 
     $student = Student::findOrFail($id);
 
-    File::delete(public_path().'/uploads/students/'.$student->image);
+   if($student->image){
+    Storage::disk('s3')->delete('uploads/students/'.$student->image);
+}
 
     $student->delete();
 
@@ -141,6 +157,19 @@ public function destroy($id , Request $request){
     return redirect()->route('students.index');
 
 
+} 
+
+
+
+public function image($filename)
+{
+    $path = 'uploads/students/' . $filename;
+
+    if (!Storage::disk('s3')->exists($path)) {
+        abort(404);
+    }
+
+    return Storage::disk('s3')->response($path);
 }
 
 }
